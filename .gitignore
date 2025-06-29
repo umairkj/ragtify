@@ -1,0 +1,63 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Python virtual environments
+.venv/
+env/
+venv/
+
+# VSCode and JetBrains IDE settings
+.vscode/
+.idea/
+
+# Node modules and build output
+node_modules/
+build/
+dist/
+
+# Environment files
+.env
+.env.*
+
+# Docker named volumes (managed by Docker, not in repo)
+ollama_data/
+qdrant_data/
+mysql_data/
+wordpress_data/
+wordpress_mysql_data/
+
+# Docker Compose override files (local/dev only)
+docker-compose.override.yml
+
+# Docker build cache and artifacts
+.docker/*-cache/
+.docker/tmp/
+.docker/ollama/.ollama/
+.docker/ollama_data/
+.docker/qdrant_data/
+.docker/mysql_data/
+.docker/docker-compose.wordpress.yml
+
+# Ignore log files and temp files
+*.log
+*.tmp
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore infra data files (if generated, not source)
+infra/*.csv
+
+# Ignore any other local or temp files
+infra/.idea/
+infra/wordpress_data/
+infra/wordpress_mysql_data/
+infra/wordpress/
+infra/wp-plugins
+infra/wp-init.sh
+infra/start-wordpress.sh
+infra/fix_products_csv.py
+infra/add_pexels_images.py
+infra/generate_woocommerce_variations.py

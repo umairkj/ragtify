@@ -1,0 +1,38 @@
+{
+	"info": {
+		"_postman_id": "c2a1b7a7-8a3b-4f5a-9b8e-3e2c1f0d3b4a",
+		"name": "Llama Chat API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Chat with Llama",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"model\": \"llama3\",\n    \"prompt\": \"Why is the sky blue?\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8000/chat",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"chat"
+					]
+				},
+				"description": "This request sends a prompt to the Llama model and streams the response back."
+			},
+			"response": []
+		}
+	]
+} 
