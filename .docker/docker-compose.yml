@@ -62,7 +62,7 @@ services:
       dockerfile: ../.docker/Dockerfile.frontend
     container_name: frontend
     ports:
-      - "3000:80"
+      - "3001:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -91,7 +91,7 @@ services:
       MYSQL_USER: llmuser
       MYSQL_PASSWORD: llmpassword
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:

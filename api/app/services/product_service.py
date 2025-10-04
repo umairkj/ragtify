@@ -126,7 +126,7 @@ async def chat_service(request: ChatRequest, db: Session):
     try:
         resp = httpx.post(
             f"{OLLAMA_BASE_URL}/api/embeddings",
-            json={"model": "llama3", "prompt": request.prompt},
+            json={"model": "llama3.2:1b", "prompt": request.prompt},
             timeout=60.0
         )
         resp.raise_for_status()
@@ -166,8 +166,22 @@ async def chat_service(request: ChatRequest, db: Session):
                     json={"model": request.model, "prompt": rag_context, "stream": True},
                 ) as response:
                     response.raise_for_status()
-                    async for chunk in response.aiter_bytes():
-                        yield chunk
+                    async for chunk in response.aiter_text():
+                        if chunk.strip():
+                            try:
+                                # Parse the Ollama response chunk
+                                data = json.loads(chunk)
+                                # Extract the response text
+                                if 'response' in data:
+                                    # Format as JSON for frontend consumption
+                                    json_chunk = json.dumps({"response": data['response']}) + "\n"
+                                    yield json_chunk.encode('utf-8')
+                                # Check if streaming is done
+                                if data.get('done', False):
+                                    break
+                            except json.JSONDecodeError:
+                                # Skip malformed JSON chunks
+                                continue
         from fastapi.responses import StreamingResponse
         return StreamingResponse(stream_response(), media_type="application/x-ndjson")
     except httpx.HTTPStatusError as e:

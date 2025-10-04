@@ -16,16 +16,20 @@ function App() {
     setMessages(prevMessages => [...prevMessages, userMessage]);
 
     try {
+      console.log('Sending request with prompt:', prompt);
       const res = await fetch('http://localhost:8000/api/v1/products/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama3',
+          model: 'llama3.2:1b',
           prompt: prompt,
         }),
       });
+
+      console.log('Response status:', res.status);
+      console.log('Response headers:', res.headers);
 
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -33,29 +37,47 @@ function App() {
 
       setMessages(prevMessages => [...prevMessages, { sender: 'model', text: '' }]);
       
+      if (!res.body) {
+        throw new Error('Response body is null');
+      }
+      
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
+      let chunkCount = 0;
       
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('Stream completed, total chunks:', chunkCount);
+          break;
+        }
         
-        const chunk = decoder.decode(value, { stream: true });
-        const jsonChunks = chunk.split('\n').filter(c => c.trim() !== '');
-
-        for (const jsonChunk of jsonChunks) {
+        chunkCount++;
+        console.log('Received chunk:', chunkCount, 'size:', value.length);
+        
+        // Decode the chunk and add to buffer
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Process complete lines from buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+        
+        for (const line of lines) {
+          if (line.trim()) {
             try {
-                const parsed = JSON.parse(jsonChunk);
-                if (parsed.response) {
-                    setMessages(prev => {
-                      const newMessages = [...prev];
-                      newMessages[newMessages.length - 1].text += parsed.response;
-                      return newMessages;
-                    });
-                }
+              const parsed = JSON.parse(line);
+              if (parsed.response) {
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  newMessages[newMessages.length - 1].text += parsed.response;
+                  return newMessages;
+                });
+              }
             } catch (error) {
-                console.error("Failed to parse JSON chunk:", jsonChunk, error);
+              console.error("Failed to parse JSON chunk:", line, error);
             }
+          }
         }
       }
 

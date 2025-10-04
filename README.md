@@ -40,7 +40,7 @@ Ragtify is a concept RAG (Retrieval-Augmented Generation) application that uses 
    ```
 4. Access the services:
    - **Backend API:** http://localhost:8000/api/v1/
-   - **Frontend:** http://localhost:3000/
+   - **Frontend:** http://localhost:3001/
    - **WordPress:** http://localhost:8080/
    - **Ollama API:** http://localhost:11434/
 

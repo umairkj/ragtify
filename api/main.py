@@ -24,7 +24,7 @@ qdrant_client = QdrantClient(host="qdrant", port=6333)
 MYSQL_USER = os.getenv('MYSQL_USER', 'llmuser')
 MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'llmpassword')
 MYSQL_HOST = os.getenv('MYSQL_HOST', 'mysql')
-MYSQL_PORT = os.getenv('MYSQL_PORT', '3306')
+MYSQL_PORT = os.getenv('MYSQL_PORT', '3307')
 MYSQL_DB = os.getenv('MYSQL_DATABASE', 'llm')
 DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
 engine = create_engine(DATABASE_URL)
@@ -49,17 +49,6 @@ async def qdrant_health():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-origins = [
-    "http://localhost:3000",
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.get("/")
 async def root():
@@ -78,7 +67,7 @@ async def chat(request: ChatRequest):
     try:
         resp = httpx.post(
             f"{OLLAMA_BASE_URL}/api/embeddings",
-            json={"model": "llama3", "prompt": request.prompt},
+            json={"model": "llama3.2:1b", "prompt": request.prompt},
             timeout=60.0
         )
         resp.raise_for_status()
@@ -119,8 +108,22 @@ async def chat(request: ChatRequest):
                     json={"model": request.model, "prompt": rag_context, "stream": True},
                 ) as response:
                     response.raise_for_status()
-                    async for chunk in response.aiter_bytes():
-                        yield chunk
+                    async for chunk in response.aiter_text():
+                        if chunk.strip():
+                            try:
+                                # Parse the Ollama response chunk
+                                data = json.loads(chunk)
+                                # Extract the response text
+                                if 'response' in data:
+                                    # Format as JSON for frontend consumption
+                                    json_chunk = json.dumps({"response": data['response']}) + "\n"
+                                    yield json_chunk.encode('utf-8')
+                                # Check if streaming is done
+                                if data.get('done', False):
+                                    break
+                            except json.JSONDecodeError:
+                                # Skip malformed JSON chunks
+                                continue
 
         return StreamingResponse(stream_response(), media_type="application/x-ndjson")
     except httpx.HTTPStatusError as e:

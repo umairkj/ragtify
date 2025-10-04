@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Test</title>
+</head>
+<body>
+    <h1>Chat Test</h1>
+    <button onclick="testChat()">Test Chat</button>
+    <div id="output"></div>
+
+    <script>
+        async function testChat() {
+            const output = document.getElementById('output');
+            output.innerHTML = 'Testing...';
+            
+            try {
+                const res = await fetch('http://localhost:8000/api/v1/products/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: 'llama3.2:1b',
+                        prompt: 'Hello, how are you?',
+                    }),
+                });
+
+                console.log('Response status:', res.status);
+                console.log('Response headers:', res.headers);
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullResponse = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    // Decode the chunk and add to buffer
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    // Process complete lines from buffer
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ''; // Keep incomplete line in buffer
+                    
+                    for (const line of lines) {
+                        if (line.trim()) {
+                            try {
+                                const parsed = JSON.parse(line);
+                                if (parsed.response) {
+                                    fullResponse += parsed.response;
+                                    output.innerHTML = '<pre>' + fullResponse + '</pre>';
+                                }
+                            } catch (error) {
+                                console.error("Failed to parse JSON chunk:", line, error);
+                            }
+                        }
+                    }
+                }
+                
+                console.log('Full response:', fullResponse);
+            } catch (error) {
+                console.error("Error:", error);
+                output.innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
