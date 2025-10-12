@@ -17,7 +17,7 @@ function App() {
 
     try {
       console.log('Sending request with prompt:', prompt);
-      const res = await fetch('http://localhost:8000/api/v1/products/chat', {
+      const res = await fetch('http://api.ragtify.local:8000/api/v1/products/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
