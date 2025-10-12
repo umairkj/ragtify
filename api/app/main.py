@@ -8,6 +8,8 @@ origins = [
     "http://localhost:3001",
     "http://127.0.0.1:3001",
     "http://0.0.0.0:3001",
+    "http://ragtify.local:3001",
+    "http://api.ragtify.local:8000",
 ]
 
 app.add_middleware(
