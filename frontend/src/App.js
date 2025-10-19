@@ -23,9 +23,11 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama3.2:1b',
+          model: 'llama3',
           prompt: prompt,
         }),
+        // Add timeout and other fetch options
+        signal: AbortSignal.timeout(60000), // 60 second timeout
       });
 
       console.log('Response status:', res.status);
@@ -47,45 +49,61 @@ function App() {
       let chunkCount = 0;
       
       while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          console.log('Stream completed, total chunks:', chunkCount);
-          break;
-        }
-        
-        chunkCount++;
-        console.log('Received chunk:', chunkCount, 'size:', value.length);
-        
-        // Decode the chunk and add to buffer
-        buffer += decoder.decode(value, { stream: true });
-        
-        // Process complete lines from buffer
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || ''; // Keep incomplete line in buffer
-        
-        for (const line of lines) {
-          if (line.trim()) {
-            try {
-              const parsed = JSON.parse(line);
-              if (parsed.response) {
-                setMessages(prev => {
-                  const newMessages = [...prev];
-                  newMessages[newMessages.length - 1].text += parsed.response;
-                  return newMessages;
-                });
+        try {
+          const { done, value } = await reader.read();
+          if (done) {
+            console.log('Stream completed, total chunks:', chunkCount);
+            break;
+          }
+          
+          chunkCount++;
+          console.log('Received chunk:', chunkCount, 'size:', value.length);
+          
+          // Decode the chunk and add to buffer
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Process complete lines from buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+          
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const parsed = JSON.parse(line);
+                if (parsed.response) {
+                  setMessages(prev => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1].text += parsed.response;
+                    return newMessages;
+                  });
+                }
+              } catch (error) {
+                console.error("Failed to parse JSON chunk:", line, error);
               }
-            } catch (error) {
-              console.error("Failed to parse JSON chunk:", line, error);
             }
           }
+        } catch (streamError) {
+          console.error("Stream reading error:", streamError);
+          // If we get a stream error, try to continue with what we have
+          break;
         }
       }
 
     } catch (error) {
       console.error("Failed to fetch:", error);
+      let errorMessage = `Error: ${error.message}`;
+      
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timed out. Please try again.';
+      } else if (error.message.includes('ERR_INCOMPLETE_CHUNKED_ENCODING')) {
+        errorMessage = 'Streaming response interrupted. Please try again.';
+      } else if (error.message.includes('network error')) {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
       setMessages(prev => {
         const newMessages = [...prev];
-        newMessages[newMessages.length - 1].text = `Error: ${error.message}`;
+        newMessages[newMessages.length - 1].text = errorMessage;
         return newMessages;
       });
     } finally {

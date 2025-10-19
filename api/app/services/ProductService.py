@@ -67,7 +67,7 @@ class ProductService:
             try:
                 resp = httpx.post(
                     f"{self.ollama_base_url}/api/embeddings",
-                    json={"model": "llama3", "prompt": text},
+                    json={"model": "llama3:latest", "prompt": text},
                     timeout=60.0
                 )
                 resp.raise_for_status()
@@ -95,7 +95,7 @@ class ProductService:
         try:
             resp = httpx.post(
                 f"{self.ollama_base_url}/api/embeddings",
-                json={"model": "llama3", "prompt": request.query},
+                json={"model": "llama3:latest", "prompt": request.query},
                 timeout=60.0
             )
             resp.raise_for_status()
@@ -123,7 +123,7 @@ class ProductService:
         try:
             resp = httpx.post(
                 f"{self.ollama_base_url}/api/embeddings",
-                json={"model": "llama3.2:1b", "prompt": request.prompt},
+                json={"model": "llama3:latest", "prompt": request.prompt},
                 timeout=60.0
             )
             resp.raise_for_status()
@@ -160,7 +160,7 @@ class ProductService:
                     async with client.stream(
                         "POST",
                         f"{self.ollama_base_url}/api/generate",
-                        json={"model": request.model, "prompt": rag_context, "stream": True},
+                        json={"model": "llama3:latest", "prompt": rag_context, "stream": True},
                     ) as response:
                         response.raise_for_status()
                         async for chunk in response.aiter_text():

@@ -182,6 +182,13 @@ show_logs() {
     docker compose -f "$DOCKER_COMPOSE_FILE" logs -f
 }
 
+# Function to add host entries only
+add_host_entries() {
+    echo -e "${BLUE}🔧 Adding Ragtify host entries to /etc/hosts...${NC}"
+    setup_domains
+    echo -e "${GREEN}✅ Host entries setup complete!${NC}"
+}
+
 # Function to show help
 show_help() {
     echo -e "${WHITE}Ragtify Docker Management Script${NC}"
@@ -193,12 +200,14 @@ show_help() {
     echo -e "  ${YELLOW}restart${NC}   Restart all services"
     echo -e "  ${YELLOW}status${NC}    Show service status"
     echo -e "  ${YELLOW}logs${NC}      Show service logs (follow mode)"
+    echo -e "  ${YELLOW}hostentry${NC} Add host entries to /etc/hosts only"
     echo -e "  ${YELLOW}help${NC}      Show this help message"
     echo ""
     echo -e "${PURPLE}Examples:${NC}"
-    echo -e "  ./ragtify up      # Start everything with animations"
-    echo -e "  ./ragtify down    # Stop everything"
-    echo -e "  ./ragtify logs    # View real-time logs"
+    echo -e "  ./ragtify up         # Start everything with animations"
+    echo -e "  ./ragtify down       # Stop everything"
+    echo -e "  ./ragtify logs       # View real-time logs"
+    echo -e "  ./ragtify hostentry  # Add host entries only"
 }
 
 # Main script logic
@@ -220,6 +229,9 @@ case "${1:-help}" in
         ;;
     "logs")
         show_logs
+        ;;
+    "hostentry")
+        add_host_entries
         ;;
     "help"|"--help"|"-h")
         show_help
