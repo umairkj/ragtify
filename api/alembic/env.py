@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+import os
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -9,6 +10,16 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
+# Override sqlalchemy.url from environment or use session config
+if not config.get_main_option("sqlalchemy.url"):
+    MYSQL_USER = os.getenv('MYSQL_USER', 'llmuser')
+    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'llmpassword')
+    MYSQL_HOST = os.getenv('MYSQL_HOST', 'mysql')
+    MYSQL_PORT = os.getenv('MYSQL_PORT', '3306')
+    MYSQL_DB = os.getenv('MYSQL_DATABASE', 'llm')
+    DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+    config.set_main_option("sqlalchemy.url", DATABASE_URL)
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -16,7 +27,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from main import Base
+from app.db.base import Base
 from app.models import *
 target_metadata = Base.metadata
 

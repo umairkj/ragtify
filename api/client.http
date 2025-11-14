@@ -1,0 +1,46 @@
+### Root Health Check
+GET http://localhost:8000/api/v1/
+
+### API Health Endpoint
+GET http://localhost:8000/api/v1/health
+
+### Create Content Buffer Entry
+POST http://localhost:8000/api/v1/content/
+Content-Type: application/json
+
+{
+  "source_id": "source-123",
+  "collection_name": "default",
+  "payload": {
+    "title": "Sample document",
+    "description": "This is a sample payload for the content buffer.",
+    "tags": ["demo", "test"]
+  }
+}
+
+### Process Content Buffer (all collections)
+POST http://localhost:8000/api/v1/content/process
+
+### Process Content Buffer (specific collection)
+POST http://localhost:8000/api/v1/content/process?collection_name=default
+
+### Search Content
+POST http://localhost:8000/api/v1/content/search
+Content-Type: application/json
+
+{
+  "collection_name": "default",
+  "query": "Sample payload",
+  "limit": 3
+}
+
+### Chat with Content
+POST http://localhost:8000/api/v1/content/chat
+Content-Type: application/json
+
+{
+  "model": "llama3:latest",
+  "prompt": "What do we know about the sample document?",
+  "collection_name": "default"
+}
+

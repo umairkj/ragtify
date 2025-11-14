@@ -17,14 +17,15 @@ function App() {
 
     try {
       console.log('Sending request with prompt:', prompt);
-      const res = await fetch('http://api.ragtify.local:8000/api/v1/products/chat', {
+      const res = await fetch('http://api.ragtify.local:8000/api/v1/content/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama3',
+          model: 'llama3:latest',
           prompt: prompt,
+          collection_name: 'default',
         }),
         // Add timeout and other fetch options
         signal: AbortSignal.timeout(60000), // 60 second timeout

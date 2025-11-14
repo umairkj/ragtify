@@ -27,7 +27,9 @@ fi
 
 # Function to print fancy RAGTIFY ASCII art
 print_ragtify_banner() {
-    clear
+    if command -v clear >/dev/null 2>&1; then
+        clear >/dev/null 2>&1 || true
+    fi
     echo -e "${CYAN}"
     cat << "EOF"
     ╔══════════════════════════════════════════════════════════════╗

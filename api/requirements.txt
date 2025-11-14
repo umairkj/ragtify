@@ -9,4 +9,6 @@ alembic
 pymysql
 cryptography
 Authlib
-requests_oauthlib 
+requests_oauthlib
+fastapi-utils 
+typing-inspect
