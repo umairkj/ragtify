@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Ragtify Docker Management Script
-# Usage: ./ragtify [up|down|build|restart|status|logs]
+# Usage: ./ragtify [up|down|build|restart|status|logs|migrate]
 
 set -e
 
@@ -118,6 +118,52 @@ show_service_urls() {
     echo ""
 }
 
+# Function to wait for backend to be ready
+wait_for_backend() {
+    echo -e "${BLUE}⏳ Waiting for backend to be ready...${NC}"
+    local max_attempts=30
+    local attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        if docker exec backend curl -f http://localhost:8000/api/v1/ >/dev/null 2>&1; then
+            echo -e "${GREEN}✅ Backend is ready!${NC}"
+            return 0
+        fi
+        attempt=$((attempt + 1))
+        echo -n "."
+        sleep 2
+    done
+    
+    echo -e "\n${YELLOW}⚠️  Backend took longer than expected to start${NC}"
+    echo -e "${YELLOW}   Migrations will be attempted anyway...${NC}"
+    return 1
+}
+
+# Function to run database migrations
+run_migrations() {
+    echo -e "${BLUE}📦 Running database migrations...${NC}"
+    
+    # Check if backend container is running
+    if ! docker ps --format '{{.Names}}' | grep -q "^backend$"; then
+        echo -e "${RED}❌ Backend container is not running!${NC}"
+        echo -e "${YELLOW}   Please start services first with './ragtify up'${NC}"
+        return 1
+    fi
+    
+    # Wait for backend to be ready
+    wait_for_backend
+    
+    # Run migrations
+    if docker exec backend alembic upgrade head 2>/dev/null; then
+        echo -e "${GREEN}✅ Migrations completed successfully!${NC}"
+        return 0
+    else
+        echo -e "${YELLOW}⚠️  Migration command failed or backend not fully ready${NC}"
+        echo -e "${YELLOW}   You can run migrations manually with: docker exec backend alembic upgrade head${NC}"
+        return 1
+    fi
+}
+
 # Function to start services
 start_services() {
     print_ragtify_banner
@@ -130,10 +176,17 @@ start_services() {
     docker compose -f "$DOCKER_COMPOSE_FILE" up -d --build
     
     echo -e "\n${GREEN}✅ Services started successfully!${NC}"
+    
+    # Run migrations after services are up
+    echo ""
+    run_migrations
+    
+    echo ""
     show_service_urls
     
     echo -e "${CYAN}💡 Tip: Use './ragtify logs' to view service logs${NC}"
     echo -e "${CYAN}💡 Tip: Use './ragtify down' to stop all services${NC}"
+    echo -e "${CYAN}💡 Tip: Use './ragtify migrate' to run migrations manually${NC}"
 }
 
 # Function to stop services
@@ -196,18 +249,20 @@ show_help() {
     echo -e "${WHITE}Ragtify Docker Management Script${NC}"
     echo -e "${CYAN}Usage: ./ragtify [command]${NC}\n"
     echo -e "${GREEN}Commands:${NC}"
-    echo -e "  ${YELLOW}up${NC}        Start all services with fancy banner"
+    echo -e "  ${YELLOW}up${NC}        Start all services with fancy banner (runs migrations automatically)"
     echo -e "  ${YELLOW}down${NC}      Stop all services"
     echo -e "  ${YELLOW}build${NC}     Build all services (no cache)"
     echo -e "  ${YELLOW}restart${NC}   Restart all services"
     echo -e "  ${YELLOW}status${NC}    Show service status"
     echo -e "  ${YELLOW}logs${NC}      Show service logs (follow mode)"
+    echo -e "  ${YELLOW}migrate${NC}   Run database migrations manually"
     echo -e "  ${YELLOW}hostentry${NC} Add host entries to /etc/hosts only"
     echo -e "  ${YELLOW}help${NC}      Show this help message"
     echo ""
     echo -e "${PURPLE}Examples:${NC}"
-    echo -e "  ./ragtify up         # Start everything with animations"
+    echo -e "  ./ragtify up         # Start everything with animations and run migrations"
     echo -e "  ./ragtify down       # Stop everything"
+    echo -e "  ./ragtify migrate    # Run database migrations"
     echo -e "  ./ragtify logs       # View real-time logs"
     echo -e "  ./ragtify hostentry  # Add host entries only"
 }
@@ -231,6 +286,9 @@ case "${1:-help}" in
         ;;
     "logs")
         show_logs
+        ;;
+    "migrate")
+        run_migrations
         ;;
     "hostentry")
         add_host_entries

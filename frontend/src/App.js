@@ -1,38 +1,321 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
+const API_BASE = 'http://api.ragtify.local:8000/api/v1';
+
+// SVG Icons
+const ChatIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const DatabaseIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+  </svg>
+);
+
+const SendIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+  </svg>
+);
+
+const SaveIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
+
+const SyncIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const RefreshIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+  </svg>
+);
+
+const LoadingSpinner = () => (
+  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+);
+
+const CheckCircleIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const ExclamationCircleIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
 function App() {
+  const [activeTab, setActiveTab] = useState('chat');
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Settings state
+  const [settings, setSettings] = useState({});
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsEditing, setSettingsEditing] = useState({});
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  
+  // Context Browser state
+  const [payloads, setPayloads] = useState([]);
+  const [payloadsLoading, setPayloadsLoading] = useState(false);
+  const [newPayload, setNewPayload] = useState({
+    source_id: '',
+    collection_name: '',
+    payload: '{}'
+  });
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [jsonError, setJsonError] = useState(null);
+  const [isJsonValid, setIsJsonValid] = useState(true);
+  const [addingPayload, setAddingPayload] = useState(false);
+
+  // Load settings when needed
+  useEffect(() => {
+    if (activeTab === 'settings' || activeTab === 'chat') {
+      loadSettings();
+    }
+  }, [activeTab]);
+
+  // Load payloads on mount
+  useEffect(() => {
+    if (activeTab === 'context') {
+      loadPayloads();
+    }
+  }, [activeTab]);
+
+  const loadSettings = async () => {
+    setSettingsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/settings/`);
+      const data = await res.json();
+      setSettings(data.settings || {});
+      setSettingsEditing(data.settings || {});
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+      alert('Failed to load settings');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    setSettingsLoading(true);
+    setSaveSuccess(false);
+    try {
+      const res = await fetch(`${API_BASE}/settings/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ settings: settingsEditing }),
+      });
+      if (!res.ok) throw new Error('Failed to save settings');
+      setSettings(settingsEditing);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      alert('Failed to save settings');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const loadPayloads = async () => {
+    setPayloadsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/content/`);
+      const data = await res.json();
+      setPayloads(data || []);
+    } catch (error) {
+      console.error('Failed to load payloads:', error);
+      alert('Failed to load payloads');
+    } finally {
+      setPayloadsLoading(false);
+    }
+  };
+
+  const syncToQdrant = async () => {
+    setSyncLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/content/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) throw new Error('Failed to sync to Qdrant');
+      const data = await res.json();
+      alert(`Sync successful! Processed ${data.content_processed || 0} items.`);
+      loadPayloads();
+    } catch (error) {
+      console.error('Failed to sync to Qdrant:', error);
+      alert('Failed to sync to Qdrant');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  const validateJSON = (jsonString) => {
+    if (!jsonString.trim()) {
+      setJsonError('Payload cannot be empty');
+      setIsJsonValid(false);
+      return false;
+    }
+    
+    try {
+      const parsed = JSON.parse(jsonString);
+      
+      // Ensure it's an object, not a primitive or array
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        setJsonError('Payload must be a valid JSON object (not an array or primitive)');
+        setIsJsonValid(false);
+        return false;
+      }
+      
+      setJsonError(null);
+      setIsJsonValid(true);
+      return true;
+    } catch (e) {
+      // Provide helpful error messages
+      let errorMsg = 'Invalid JSON format';
+      
+      if (e.message.includes('Unexpected token')) {
+        errorMsg = `Syntax error: ${e.message.replace(/^Unexpected token .+ in JSON at position \d+/, 'Unexpected token in JSON')}`;
+      } else if (e.message.includes('Unexpected end')) {
+        errorMsg = 'Incomplete JSON: Missing closing bracket or quote';
+      } else if (e.message.includes('Expected')) {
+        errorMsg = `Parse error: ${e.message}`;
+      }
+      
+      setJsonError(errorMsg);
+      setIsJsonValid(false);
+      return false;
+    }
+  };
+
+  const handlePayloadChange = (value) => {
+    setNewPayload({...newPayload, payload: value});
+    if (value.trim()) {
+      validateJSON(value);
+    } else {
+      setJsonError(null);
+      setIsJsonValid(true);
+    }
+  };
+
+  const addPayload = async () => {
+    // Validate before submitting
+    if (!validateJSON(newPayload.payload)) {
+      return;
+    }
+    
+    if (!newPayload.collection_name.trim()) {
+      alert('Collection name is required');
+      return;
+    }
+
+    setAddingPayload(true);
+    try {
+      const payloadObj = JSON.parse(newPayload.payload);
+
+      const res = await fetch(`${API_BASE}/content/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source_id: newPayload.source_id || null,
+          collection_name: newPayload.collection_name,
+          payload: payloadObj,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to add payload');
+      
+      setNewPayload({ source_id: '', collection_name: '', payload: '{}' });
+      setJsonError(null);
+      setIsJsonValid(true);
+      loadPayloads();
+      alert('Payload added successfully!');
+    } catch (error) {
+      console.error('Failed to add payload:', error);
+      alert('Failed to add payload');
+    } finally {
+      setAddingPayload(false);
+    }
+  };
+
+  const deletePayload = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this payload? It will also be removed from Qdrant.')) {
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/content/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete payload');
+      loadPayloads();
+    } catch (error) {
+      console.error('Failed to delete payload:', error);
+      alert('Failed to delete payload');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!prompt.trim() || isLoading) return;
 
     setIsLoading(true);
-
     const userMessage = { sender: 'user', text: prompt };
     setMessages(prevMessages => [...prevMessages, userMessage]);
 
     try {
-      console.log('Sending request with prompt:', prompt);
-      const res = await fetch('http://api.ragtify.local:8000/api/v1/content/chat', {
+      const res = await fetch(`${API_BASE}/content/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama3:latest',
+          model: settings.llama_model || 'llama3:latest',
           prompt: prompt,
-          collection_name: 'default',
+          collection_name: settings.default_collection_name || 'content',
         }),
-        // Add timeout and other fetch options
-        signal: AbortSignal.timeout(60000), // 60 second timeout
+        signal: AbortSignal.timeout(60000),
       });
-
-      console.log('Response status:', res.status);
-      console.log('Response headers:', res.headers);
 
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -47,25 +330,15 @@ function App() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let chunkCount = 0;
       
       while (true) {
         try {
           const { done, value } = await reader.read();
-          if (done) {
-            console.log('Stream completed, total chunks:', chunkCount);
-            break;
-          }
+          if (done) break;
           
-          chunkCount++;
-          console.log('Received chunk:', chunkCount, 'size:', value.length);
-          
-          // Decode the chunk and add to buffer
           buffer += decoder.decode(value, { stream: true });
-          
-          // Process complete lines from buffer
           const lines = buffer.split('\n');
-          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+          buffer = lines.pop() || '';
           
           for (const line of lines) {
             if (line.trim()) {
@@ -85,7 +358,6 @@ function App() {
           }
         } catch (streamError) {
           console.error("Stream reading error:", streamError);
-          // If we get a stream error, try to continue with what we have
           break;
         }
       }
@@ -96,10 +368,6 @@ function App() {
       
       if (error.name === 'AbortError') {
         errorMessage = 'Request timed out. Please try again.';
-      } else if (error.message.includes('ERR_INCOMPLETE_CHUNKED_ENCODING')) {
-        errorMessage = 'Streaming response interrupted. Please try again.';
-      } else if (error.message.includes('network error')) {
-        errorMessage = 'Network error. Please check your connection.';
       }
       
       setMessages(prev => {
@@ -113,39 +381,440 @@ function App() {
     }
   };
 
+  const tabs = [
+    { id: 'chat', label: 'Chat', icon: ChatIcon },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+    { id: 'context', label: 'Context Browser', icon: DatabaseIcon },
+  ];
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Chat with Llama</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Header */}
+      <header className="bg-slate-800/50 backdrop-blur-lg border-b border-slate-700/50 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">R</span>
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                RAGtify
+              </h1>
+            </div>
+            
+            {/* Tabs */}
+            <nav className="flex space-x-1 bg-slate-800/50 p-1 rounded-lg">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/50'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                    }`}
+                  >
+                    <Icon />
+                    <span className="font-medium">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
       </header>
-      <main className="App-main">
-        <div className="chat-window">
-          {messages.length > 0 ? messages.map((msg, index) => (
-            <div key={index} className={`message ${msg.sender}`}>
-              {msg.sender === 'user' ? (
-                <strong>{msg.text}</strong>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Chat Tab */}
+        {activeTab === 'chat' && (
+          <div className="flex flex-col h-[calc(100vh-8rem)]">
+            <div className="flex-1 overflow-y-auto bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 mb-4 space-y-4">
+              {messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <ChatIcon />
+                    <p className="mt-4 text-slate-400 text-lg">Start a conversation...</p>
+                  </div>
+                </div>
               ) : (
-                <pre>{msg.text}</pre>
+                messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-3xl rounded-2xl px-4 py-3 ${
+                        msg.sender === 'user'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-700/50 text-slate-200'
+                      }`}
+                    >
+                      {msg.sender === 'user' ? (
+                        <p className="font-medium">{msg.text}</p>
+                      ) : (
+                        <pre className="whitespace-pre-wrap font-sans">{msg.text || 'Thinking...'}</pre>
+                      )}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
-          )) : <div className="placeholder">Ask me anything...</div>}
-        </div>
-        <form onSubmit={handleSubmit} className="chat-form">
-          <input
-            type="text"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Type your message here..."
-            className="chat-input"
-            disabled={isLoading}
-          />
-          <button type="submit" className="send-button" disabled={isLoading}>
-            {isLoading ? 'Thinking...' : 'Send'}
-          </button>
-        </form>
+            
+            <form onSubmit={handleSubmit} className="flex space-x-3">
+              <input
+                type="text"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 px-4 py-3 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !prompt.trim()}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/50"
+              >
+                {isLoading ? <LoadingSpinner /> : <SendIcon />}
+                <span>{isLoading ? 'Sending...' : 'Send'}</span>
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+                  <SettingsIcon />
+                  <span>Settings</span>
+                </h2>
+                {saveSuccess && (
+                  <div className="flex items-center space-x-2 text-green-400">
+                    <SaveIcon />
+                    <span className="text-sm font-medium">Saved!</span>
+                  </div>
+                )}
+              </div>
+              
+              {settingsLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner />
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Ollama URL
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsEditing.ollama_url || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, ollama_url: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Default Collection Name
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsEditing.default_collection_name || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, default_collection_name: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Vector Size
+                  </label>
+                  <input
+                    type="number"
+                    value={settingsEditing.vector_size || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, vector_size: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Llama Model
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsEditing.llama_model || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, llama_model: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Qdrant Host
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsEditing.qdrant_host || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, qdrant_host: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Qdrant Port
+                  </label>
+                  <input
+                    type="number"
+                    value={settingsEditing.qdrant_port || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, qdrant_port: e.target.value})}
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    RAG Context Template <span className="text-xs text-slate-500">(use {'{prompt}'} and {'{content_list}'})</span>
+                  </label>
+                  <textarea
+                    value={settingsEditing.rag_context_template || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, rag_context_template: e.target.value})}
+                    rows="4"
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    RAG Context When Search Failed <span className="text-xs text-slate-500">(use {'{prompt}'})</span>
+                  </label>
+                  <textarea
+                    value={settingsEditing.rag_context_search_failed || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, rag_context_search_failed: e.target.value})}
+                    rows="3"
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    RAG Context When No Results <span className="text-xs text-slate-500">(use {'{prompt}'})</span>
+                  </label>
+                  <textarea
+                    value={settingsEditing.rag_context_no_results || ''}
+                    onChange={(e) => setSettingsEditing({...settingsEditing, rag_context_no_results: e.target.value})}
+                    rows="3"
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                  />
+                </div>
+              </div>
+              
+              <button
+                onClick={saveSettings}
+                disabled={settingsLoading}
+                className="mt-6 w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/50"
+              >
+                {settingsLoading ? <LoadingSpinner /> : <SaveIcon />}
+                <span>Save Settings</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Context Browser Tab */}
+        {activeTab === 'context' && (
+          <div className="space-y-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={syncToQdrant}
+                disabled={syncLoading}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+              >
+                {syncLoading ? <LoadingSpinner /> : <SyncIcon />}
+                <span>{syncLoading ? 'Syncing...' : 'Sync to Qdrant'}</span>
+              </button>
+              <button
+                onClick={loadPayloads}
+                disabled={payloadsLoading}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+              >
+                <RefreshIcon />
+                <span>Refresh</span>
+              </button>
+            </div>
+            
+            {/* Add Payload Section */}
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+                <PlusIcon />
+                <span>Add New Payload</span>
+              </h3>
+              <div className="space-y-4">
+                {addingPayload && (
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-center space-x-2 text-blue-400">
+                    <LoadingSpinner />
+                    <span className="text-sm font-medium">Adding payload...</span>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Source ID (optional)"
+                    value={newPayload.source_id}
+                    onChange={(e) => setNewPayload({...newPayload, source_id: e.target.value})}
+                    disabled={addingPayload}
+                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Collection Name *"
+                    value={newPayload.collection_name}
+                    onChange={(e) => setNewPayload({...newPayload, collection_name: e.target.value})}
+                    disabled={addingPayload}
+                    required
+                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-slate-300">
+                      Payload (JSON Object) *
+                    </label>
+                    {newPayload.payload.trim() && !addingPayload && (
+                      <div className={`flex items-center space-x-1 ${
+                        isJsonValid ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {isJsonValid ? (
+                          <>
+                            <CheckCircleIcon />
+                            <span className="text-xs font-medium">Valid JSON</span>
+                          </>
+                        ) : (
+                          <>
+                            <ExclamationCircleIcon />
+                            <span className="text-xs font-medium">Invalid JSON</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <textarea
+                    placeholder='{"key": "value", "title": "Example"}'
+                    value={newPayload.payload}
+                    onChange={(e) => handlePayloadChange(e.target.value)}
+                    disabled={addingPayload}
+                    rows="6"
+                    className={`w-full px-4 py-2 bg-slate-700/50 border rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                      addingPayload
+                        ? 'border-slate-600'
+                        : newPayload.payload.trim()
+                        ? isJsonValid
+                          ? 'border-green-500/50 focus:ring-green-500'
+                          : 'border-red-500/50 focus:ring-red-500'
+                        : 'border-slate-600 focus:ring-indigo-500'
+                    }`}
+                  />
+                  {jsonError && !addingPayload && (
+                    <div className="mt-2 flex items-start space-x-2 text-red-400 text-sm">
+                      <ExclamationCircleIcon />
+                      <span>{jsonError}</span>
+                    </div>
+                  )}
+                  {newPayload.payload.trim() && isJsonValid && !addingPayload && (
+                    <div className="mt-2 text-xs text-slate-400">
+                      ✓ Valid JSON object. Ready to save.
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={addPayload}
+                  disabled={!isJsonValid || !newPayload.collection_name.trim() || addingPayload}
+                  className="w-full px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                >
+                  {addingPayload ? (
+                    <>
+                      <LoadingSpinner />
+                      <span>Adding Payload...</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlusIcon />
+                      <span>Add Payload</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Payloads List */}
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6">
+              <h3 className="text-xl font-bold text-white mb-4">
+                Payloads <span className="text-slate-400 font-normal">({payloads.length})</span>
+              </h3>
+              {payloadsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner />
+                </div>
+              ) : payloads.length === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <DatabaseIcon />
+                  <p className="mt-4">No payloads found.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {payloads.map((payload) => (
+                    <div
+                      key={payload.id}
+                      className="bg-slate-700/30 rounded-xl border border-slate-600/50 p-4 hover:border-slate-500 transition-all"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="px-3 py-1 bg-indigo-600/20 text-indigo-300 rounded-lg text-sm font-medium">
+                            ID: {payload.id}
+                          </span>
+                          {payload.source_id && (
+                            <span className="px-3 py-1 bg-slate-600/50 text-slate-300 rounded-lg text-sm">
+                              Source: {payload.source_id}
+                            </span>
+                          )}
+                          {payload.collection_name && (
+                            <span className="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-lg text-sm">
+                              Collection: {payload.collection_name}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => deletePayload(payload.id)}
+                          className="p-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-all"
+                          title="Delete"
+                        >
+                          <TrashIcon />
+                        </button>
+                      </div>
+                      <pre className="bg-slate-900/50 rounded-lg p-4 overflow-x-auto text-sm text-slate-300 font-mono">
+                        {JSON.stringify(payload.payload, null, 2)}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
-export default App; 
+export default App;

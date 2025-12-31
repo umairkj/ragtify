@@ -23,6 +23,16 @@ class ContentAPI:
             payload=request.payload
         )
 
+    @router.get("/")
+    def get_content(self, collection_name: str = Query(None, description="Optional collection name to filter by.")):
+        """Get all content from database"""
+        return content_service.get_all_content(self.db, collection_name=collection_name)
+
+    @router.delete("/{content_id}")
+    def delete_content(self, content_id: int):
+        """Delete content from database and Qdrant"""
+        return content_service.delete_content(self.db, content_id)
+
     @router.post("/process")
     def process_content(self, collection_name: str = Query(None, description="Optional collection name to process. If not provided, processes all collections.")):
         """Process content from buffer and sync to Qdrant"""
