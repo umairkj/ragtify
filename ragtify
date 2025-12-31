@@ -258,6 +258,7 @@ show_help() {
     echo -e "  ${YELLOW}migrate${NC}   Run database migrations manually"
     echo -e "  ${YELLOW}hostentry${NC} Add host entries to /etc/hosts only"
     echo -e "  ${YELLOW}help${NC}      Show this help message"
+    echo -e "  ${YELLOW}ui${NC}        Build frontend UI"
     echo ""
     echo -e "${PURPLE}Examples:${NC}"
     echo -e "  ./ragtify up         # Start everything with animations and run migrations"
@@ -265,12 +266,26 @@ show_help() {
     echo -e "  ./ragtify migrate    # Run database migrations"
     echo -e "  ./ragtify logs       # View real-time logs"
     echo -e "  ./ragtify hostentry  # Add host entries only"
+    echo -e "  ./ragtify ui         # Build frontend UI assets"
 }
+
+build_ui() {
+    echo -e "${BLUE}🎨 Rebuilding frontend UI via Docker...${NC}"
+    cd "$SCRIPT_DIR"
+    docker compose -f "$DOCKER_COMPOSE_FILE" build frontend
+    docker compose -f "$DOCKER_COMPOSE_FILE" up -d frontend
+    echo -e "${GREEN}✅ Frontend rebuilt successfully!${NC}"
+}
+
+
 
 # Main script logic
 case "${1:-help}" in
     "up")
         start_services
+        ;;
+    "ui")
+        build_ui
         ;;
     "down")
         stop_services
