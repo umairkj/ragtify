@@ -96,11 +96,11 @@ function App() {
   const [newPayload, setNewPayload] = useState({
     source_id: '',
     collection_name: '',
-    payload: '{}'
+    title: '',
+    description: '',
+    url: ''
   });
   const [syncLoading, setSyncLoading] = useState(false);
-  const [jsonError, setJsonError] = useState(null);
-  const [isJsonValid, setIsJsonValid] = useState(true);
   const [addingPayload, setAddingPayload] = useState(false);
 
   // Load settings when needed
@@ -121,9 +121,10 @@ function App() {
     setSettingsLoading(true);
     try {
       const res = await fetch(`${API_BASE}/settings/`);
-      const data = await res.json();
-      setSettings(data.settings || {});
-      setSettingsEditing(data.settings || {});
+      const data = await res.json().catch(() => ({}));
+      const settingsData = data.settings || {};
+      setSettings(settingsData);
+      setSettingsEditing(settingsData);
     } catch (error) {
       console.error('Failed to load settings:', error);
       alert('Failed to load settings');
@@ -159,8 +160,8 @@ function App() {
     setPayloadsLoading(true);
     try {
       const res = await fetch(`${API_BASE}/content/`);
-      const data = await res.json();
-      setPayloads(data || []);
+      const data = await res.json().catch(() => []);
+      setPayloads(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to load payloads:', error);
       alert('Failed to load payloads');
@@ -190,68 +191,30 @@ function App() {
     }
   };
 
-  const validateJSON = (jsonString) => {
-    if (!jsonString.trim()) {
-      setJsonError('Payload cannot be empty');
-      setIsJsonValid(false);
-      return false;
-    }
-    
-    try {
-      const parsed = JSON.parse(jsonString);
-      
-      // Ensure it's an object, not a primitive or array
-      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-        setJsonError('Payload must be a valid JSON object (not an array or primitive)');
-        setIsJsonValid(false);
-        return false;
-      }
-      
-      setJsonError(null);
-      setIsJsonValid(true);
-      return true;
-    } catch (e) {
-      // Provide helpful error messages
-      let errorMsg = 'Invalid JSON format';
-      
-      if (e.message.includes('Unexpected token')) {
-        errorMsg = `Syntax error: ${e.message.replace(/^Unexpected token .+ in JSON at position \d+/, 'Unexpected token in JSON')}`;
-      } else if (e.message.includes('Unexpected end')) {
-        errorMsg = 'Incomplete JSON: Missing closing bracket or quote';
-      } else if (e.message.includes('Expected')) {
-        errorMsg = `Parse error: ${e.message}`;
-      }
-      
-      setJsonError(errorMsg);
-      setIsJsonValid(false);
-      return false;
-    }
-  };
-
-  const handlePayloadChange = (value) => {
-    setNewPayload({...newPayload, payload: value});
-    if (value.trim()) {
-      validateJSON(value);
-    } else {
-      setJsonError(null);
-      setIsJsonValid(true);
-    }
-  };
 
   const addPayload = async () => {
-    // Validate before submitting
-    if (!validateJSON(newPayload.payload)) {
+    const collectionName = newPayload.collection_name || '';
+    const title = newPayload.title || '';
+    const description = newPayload.description || '';
+    const url = newPayload.url || '';
+
+    if (!collectionName.trim()) {
+      alert('Collection name is required');
       return;
     }
-    
-    if (!newPayload.collection_name.trim()) {
-      alert('Collection name is required');
+
+    if (!title.trim() || !description.trim() || !url.trim()) {
+      alert('Title, Description, and URL are required');
       return;
     }
 
     setAddingPayload(true);
     try {
-      const payloadObj = JSON.parse(newPayload.payload);
+      const payloadObj = {
+        title: title,
+        description: description,
+        url: url
+      };
 
       const res = await fetch(`${API_BASE}/content/`, {
         method: 'POST',
@@ -260,15 +223,13 @@ function App() {
         },
         body: JSON.stringify({
           source_id: newPayload.source_id || null,
-          collection_name: newPayload.collection_name,
+          collection_name: collectionName,
           payload: payloadObj,
         }),
       });
       if (!res.ok) throw new Error('Failed to add payload');
-      
-      setNewPayload({ source_id: '', collection_name: '', payload: '{}' });
-      setJsonError(null);
-      setIsJsonValid(true);
+
+      setNewPayload({ source_id: '', collection_name: '', title: '', description: '', url: '' });
       loadPayloads();
       alert('Payload added successfully!');
     } catch (error) {
@@ -671,7 +632,7 @@ function App() {
                   <input
                     type="text"
                     placeholder="Source ID (optional)"
-                    value={newPayload.source_id}
+                    value={newPayload.source_id || ''}
                     onChange={(e) => setNewPayload({...newPayload, source_id: e.target.value})}
                     disabled={addingPayload}
                     className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -679,67 +640,45 @@ function App() {
                   <input
                     type="text"
                     placeholder="Collection Name *"
-                    value={newPayload.collection_name}
+                    value={newPayload.collection_name || ''}
                     onChange={(e) => setNewPayload({...newPayload, collection_name: e.target.value})}
                     disabled={addingPayload}
                     required
                     className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-slate-300">
-                      Payload (JSON Object) *
-                    </label>
-                    {newPayload.payload.trim() && !addingPayload && (
-                      <div className={`flex items-center space-x-1 ${
-                        isJsonValid ? 'text-green-400' : 'text-red-400'
-                      }`}>
-                        {isJsonValid ? (
-                          <>
-                            <CheckCircleIcon />
-                            <span className="text-xs font-medium">Valid JSON</span>
-                          </>
-                        ) : (
-                          <>
-                            <ExclamationCircleIcon />
-                            <span className="text-xs font-medium">Invalid JSON</span>
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <textarea
-                    placeholder='{"key": "value", "title": "Example"}'
-                    value={newPayload.payload}
-                    onChange={(e) => handlePayloadChange(e.target.value)}
+                <div className="grid grid-cols-1 gap-4">
+                  <input
+                    type="text"
+                    placeholder="Title *"
+                    value={newPayload.title || ''}
+                    onChange={(e) => setNewPayload({...newPayload, title: e.target.value})}
                     disabled={addingPayload}
-                    rows="6"
-                    className={`w-full px-4 py-2 bg-slate-700/50 border rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                      addingPayload
-                        ? 'border-slate-600'
-                        : newPayload.payload.trim()
-                        ? isJsonValid
-                          ? 'border-green-500/50 focus:ring-green-500'
-                          : 'border-red-500/50 focus:ring-red-500'
-                        : 'border-slate-600 focus:ring-indigo-500'
-                    }`}
+                    required
+                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
-                  {jsonError && !addingPayload && (
-                    <div className="mt-2 flex items-start space-x-2 text-red-400 text-sm">
-                      <ExclamationCircleIcon />
-                      <span>{jsonError}</span>
-                    </div>
-                  )}
-                  {newPayload.payload.trim() && isJsonValid && !addingPayload && (
-                    <div className="mt-2 text-xs text-slate-400">
-                      ✓ Valid JSON object. Ready to save.
-                    </div>
-                  )}
+                  <textarea
+                    placeholder="Description *"
+                    value={newPayload.description || ''}
+                    onChange={(e) => setNewPayload({...newPayload, description: e.target.value})}
+                    disabled={addingPayload}
+                    required
+                    rows="3"
+                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+                  />
+                  <input
+                    type="url"
+                    placeholder="URL *"
+                    value={newPayload.url || ''}
+                    onChange={(e) => setNewPayload({...newPayload, url: e.target.value})}
+                    disabled={addingPayload}
+                    required
+                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
                 </div>
                 <button
                   onClick={addPayload}
-                  disabled={!isJsonValid || !newPayload.collection_name.trim() || addingPayload}
+                  disabled={!(newPayload.collection_name || '').trim() || !(newPayload.title || '').trim() || !(newPayload.description || '').trim() || !(newPayload.url || '').trim() || addingPayload}
                   className="w-full px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
                 >
                   {addingPayload ? (
