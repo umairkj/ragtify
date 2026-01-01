@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import {
   SendIcon, SaveIcon, SyncIcon, RefreshIcon, TrashIcon, PlusIcon,
   LoadingSpinner, CheckCircleIcon, ExclamationCircleIcon,
-  ChatIcon, SettingsIcon, DatabaseIcon
+  ChatIcon, SettingsIcon, DatabaseIcon, SunIcon, MoonIcon
 } from './components/Icons';
 
 const API_BASE = 'http://api.ragtify.local:8000/api/v1';
@@ -14,6 +14,21 @@ function App() {
   const [prompt, setPrompt] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Theme state
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   // Settings state
   const [settings, setSettings] = useState({});
@@ -35,8 +50,7 @@ function App() {
   const [addingPayload, setAddingPayload] = useState(false);
 
   // Sidebar state
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
+  
   // Load settings when needed
   useEffect(() => {
     if (activeTab === 'settings' || activeTab === 'chat') {
@@ -283,42 +297,43 @@ function App() {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-white">
       {/* Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col overflow-hidden ${sidebarOpen ? 'ml-64' : 'ml-0'} transition-all duration-200`}>
+      <div className="flex-1 flex flex-col overflow-hidden ml-64 transition-all duration-200 dark:bg-slate-900">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <h1 className="text-xl font-semibold text-gray-800">
+            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
               {activeTab === 'chat' && 'Chat'}
               {activeTab === 'settings' && 'Settings'}
               {activeTab === 'context' && 'Context Browser'}
             </h1>
           </div>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {darkMode ? <SunIcon /> : <MoonIcon />}
+          </button>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-6 bg-white dark:bg-slate-900">
           {/* Chat Tab */}
 {activeTab === 'chat' && (
   <div className="flex flex-col h-[calc(100vh-8rem)]">
-    <div className="flex-1 overflow-y-auto backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6 mb-4 space-y-4">
+    <div className="flex-1 overflow-y-auto backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 mb-4 space-y-4">
       {messages.length === 0 ? (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <ChatIcon />
-            <p className="mt-4 text-slate-400 text-lg">Start a conversation...</p>
+            <div className="text-gray-500 dark:text-slate-400">
+              <ChatIcon />
+            </div>
+            <p className="mt-4 text-gray-500 dark:text-slate-400 text-lg">Start a conversation...</p>
           </div>
         </div>
       ) : (
@@ -331,7 +346,7 @@ function App() {
               className={`max-w-3xl rounded-2xl px-4 py-3 ${
                 msg.sender === 'user'
                   ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-700/50 text-slate-200'
+                  : 'bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200'
               }`}
             >
               {msg.sender === 'user' ? (
@@ -351,13 +366,13 @@ function App() {
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         placeholder="Type your message..."
-        className="flex-1 px-4 py-3 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        className="flex-1 px-4 py-3 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
         disabled={isLoading}
       />
       <button
         type="submit"
         disabled={isLoading || !prompt.trim()}
-        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/50"
+        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg shadow-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/50"
       >
         {isLoading ? <LoadingSpinner /> : <SendIcon />}
         <span>{isLoading ? 'Sending...' : 'Send'}</span>
@@ -370,14 +385,14 @@ function App() {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-6">
-            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center space-x-2">
                   <SettingsIcon />
                   <span>Settings</span>
                 </h2>
                 {saveSuccess && (
-                  <div className="flex items-center space-x-2 text-green-400">
+                  <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
                     <SaveIcon />
                     <span className="text-sm font-medium">Saved!</span>
                   </div>
@@ -392,112 +407,112 @@ function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Ollama URL
                   </label>
                   <input
                     type="text"
                     value={settingsEditing.ollama_url || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, ollama_url: e.target.value})}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Default Collection Name
                   </label>
                   <input
                     type="text"
                     value={settingsEditing.default_collection_name || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, default_collection_name: e.target.value})}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Vector Size
                   </label>
                   <input
                     type="number"
                     value={settingsEditing.vector_size || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, vector_size: e.target.value})}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Llama Model
                   </label>
                   <input
                     type="text"
                     value={settingsEditing.llama_model || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, llama_model: e.target.value})}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Qdrant Host
                   </label>
                   <input
                     type="text"
                     value={settingsEditing.qdrant_host || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, qdrant_host: e.target.value})}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                     Qdrant Port
                   </label>
                   <input
                     type="number"
                     value={settingsEditing.qdrant_port || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, qdrant_port: e.target.value})}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
 
               <div className="mt-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    RAG Context Template <span className="text-xs text-slate-500">(use {'{prompt}'} and {'{content_list}'})</span>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                    RAG Context Template <span className="text-xs text-gray-500 dark:text-slate-500">(use {'{prompt}'} and {'{content_list}'})</span>
                   </label>
                   <textarea
                     value={settingsEditing.rag_context_template || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, rag_context_template: e.target.value})}
                     rows="4"
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    RAG Context When Search Failed <span className="text-xs text-slate-500">(use {'{prompt}'})</span>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                    RAG Context When Search Failed <span className="text-xs text-gray-500 dark:text-slate-500">(use {'{prompt}'})</span>
                   </label>
                   <textarea
                     value={settingsEditing.rag_context_search_failed || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, rag_context_search_failed: e.target.value})}
                     rows="3"
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    RAG Context When No Results <span className="text-xs text-slate-500">(use {'{prompt}'})</span>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
+                    RAG Context When No Results <span className="text-xs text-gray-500 dark:text-slate-500">(use {'{prompt}'})</span>
                   </label>
                   <textarea
                     value={settingsEditing.rag_context_no_results || ''}
                     onChange={(e) => setSettingsEditing({...settingsEditing, rag_context_no_results: e.target.value})}
                     rows="3"
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
                   />
                 </div>
               </div>
@@ -505,7 +520,7 @@ function App() {
               <button
                 onClick={saveSettings}
                 disabled={settingsLoading}
-                className="mt-6 w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/50"
+                className="mt-6 w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/50"
               >
                 {settingsLoading ? <LoadingSpinner /> : <SaveIcon />}
                 <span>Save Settings</span>
@@ -522,7 +537,7 @@ function App() {
               <button
                 onClick={syncToQdrant}
                 disabled={syncLoading}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
               >
                 {syncLoading ? <LoadingSpinner /> : <SyncIcon />}
                 <span>{syncLoading ? 'Syncing...' : 'Sync to Qdrant'}</span>
@@ -530,7 +545,7 @@ function App() {
               <button
                 onClick={loadPayloads}
                 disabled={payloadsLoading}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
+                className="px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:bg-gray-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed text-gray-700 dark:text-slate-200 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2"
               >
                 <RefreshIcon />
                 <span>Refresh</span>
@@ -538,14 +553,14 @@ function App() {
             </div>
 
             {/* Add Payload Section */}
-            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center space-x-2">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
                 <PlusIcon />
                 <span>Add New Payload</span>
               </h3>
               <div className="space-y-4">
                 {addingPayload && (
-                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 flex items-center space-x-2 text-blue-400">
+                  <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex items-center space-x-2 text-blue-600 dark:text-blue-400">
                     <LoadingSpinner />
                     <span className="text-sm font-medium">Adding payload...</span>
                   </div>
@@ -557,7 +572,7 @@ function App() {
                     value={newPayload.source_id || ''}
                     onChange={(e) => setNewPayload({...newPayload, source_id: e.target.value})}
                     disabled={addingPayload}
-                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <input
                     type="text"
@@ -566,7 +581,7 @@ function App() {
                     onChange={(e) => setNewPayload({...newPayload, collection_name: e.target.value})}
                     disabled={addingPayload}
                     required
-                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div className="grid grid-cols-1 gap-4">
@@ -577,7 +592,7 @@ function App() {
                     onChange={(e) => setNewPayload({...newPayload, title: e.target.value})}
                     disabled={addingPayload}
                     required
-                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <textarea
                     placeholder="Description *"
@@ -586,7 +601,7 @@ function App() {
                     disabled={addingPayload}
                     required
                     rows="3"
-                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+                    className="px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
                   />
                   <input
                     type="url"
@@ -595,13 +610,13 @@ function App() {
                     onChange={(e) => setNewPayload({...newPayload, url: e.target.value})}
                     disabled={addingPayload}
                     required
-                    className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 <button
                   onClick={addPayload}
                   disabled={!(newPayload.collection_name || '').trim() || !(newPayload.title || '').trim() || !(newPayload.description || '').trim() || !(newPayload.url || '').trim() || addingPayload}
-                  className="w-full px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+                  className="w-full px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 text-white rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
                 >
                   {addingPayload ? (
                     <>
@@ -619,16 +634,16 @@ function App() {
             </div>
 
             {/* Payloads List */}
-            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-6">
-              <h3 className="text-xl font-bold text-white mb-4">
-                Payloads <span className="text-slate-400 font-normal">({payloads.length})</span>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                Payloads <span className="text-gray-500 dark:text-slate-500 font-normal">({payloads.length})</span>
               </h3>
               {payloadsLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <LoadingSpinner />
                 </div>
               ) : payloads.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
+                <div className="text-center py-12 text-gray-500 dark:text-slate-400">
                   <DatabaseIcon />
                   <p className="mt-4">No payloads found.</p>
                 </div>
@@ -637,33 +652,33 @@ function App() {
                   {payloads.map((payload) => (
                     <div
                       key={payload.id}
-                      className="bg-slate-700/30 rounded-xl border border-slate-600/50 p-4 hover:border-slate-500 transition-all"
+                      className="bg-gray-50 dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-700 p-4 hover:border-gray-300 dark:hover:border-slate-600 transition-all"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex flex-wrap items-center gap-3">
-                          <span className="px-3 py-1 bg-indigo-600/20 text-indigo-300 rounded-lg text-sm font-medium">
+                          <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 rounded-lg text-sm font-medium">
                             ID: {payload.id}
                           </span>
                           {payload.source_id && (
-                            <span className="px-3 py-1 bg-slate-600/50 text-slate-300 rounded-lg text-sm">
+                            <span className="px-3 py-1 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-lg text-sm">
                               Source: {payload.source_id}
                             </span>
                           )}
                           {payload.collection_name && (
-                            <span className="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-lg text-sm">
+                            <span className="px-3 py-1 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-lg text-sm">
                               Collection: {payload.collection_name}
                             </span>
                           )}
                         </div>
                         <button
                           onClick={() => deletePayload(payload.id)}
-                          className="p-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-all"
+                          className="p-2 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg transition-all"
                           title="Delete"
                         >
                           <TrashIcon />
                         </button>
                       </div>
-                      <pre className="bg-slate-900/50 rounded-lg p-4 overflow-x-auto text-sm text-slate-300 font-mono">
+                      <pre className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-4 overflow-x-auto text-sm text-gray-800 dark:text-slate-300 font-mono">
                         {JSON.stringify(payload.payload, null, 2)}
                       </pre>
                     </div>
