@@ -1,4 +1,4 @@
-<table style="border: 0px;">
+<table style="border:0px;">
   <tr>
     <td width="400" style="vertical-align: top;">
       <img src="ragtify-hero.png" alt="ragtify logo" width="400" style="border-radius: 10px;"/>
